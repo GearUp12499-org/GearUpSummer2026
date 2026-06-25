@@ -1,6 +1,14 @@
 repositories {
     mavenCentral()
-    google() // Needed for androidx
+    google()// Needed for androidx
+
+    maven {
+        url = 'https://maven.brott.dev/'
+    }
+
+    maven {
+        url = 'https://www.gearup12499.com/TaskShark/'
+    }
 }
 
 dependencies {
@@ -13,5 +21,9 @@ dependencies {
     implementation 'org.firstinspires.ftc:FtcCommon:11.1.0'
     implementation 'org.firstinspires.ftc:Vision:11.1.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
+
+    implementation 'io.github.gearup12499.taskshark:taskshark-android:0.2.11'
+
+    implementation 'org.ejml:ejml-all:0.43'
 }
 
