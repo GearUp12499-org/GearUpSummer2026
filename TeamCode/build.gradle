@@ -18,16 +18,39 @@ apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
-    kotlinOptions {
-        jvmTarget = '21'
+    androidResources {
+        noCompress 'tfile'
     }
 
+    compileSdk 36
+//    kotlinOptions {
+//        jvmTarget = '21'
+//    }
+
     packagingOptions {
+        jniLibs{
+            pickFirsts += ['**/*.so']
+        }
         jniLibs.useLegacyPackaging true
     }
 }
 
+ext {
+    isPushPaths = false
+}
+
 dependencies {
     implementation project(':FtcRobotController')
-    implementation 'androidx.core:core-ktx:1.19.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.13.4'
+
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+afterEvaluate {
+    tasks.named("assembleDebug").configure {
+//        finalizedBy(":TeamCode:pushPaths")
+    }
 }
