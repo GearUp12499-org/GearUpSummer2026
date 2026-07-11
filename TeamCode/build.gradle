@@ -28,8 +28,8 @@ android {
 //    }
 
     packagingOptions {
-        jniLibs{
-            pickFirsts += ['**/*.so']
+        jniLibs {
+            pickFirsts += ['**/*.so', '**/*.so']
         }
         jniLibs.useLegacyPackaging true
     }
