@@ -7,6 +7,13 @@ abstract class Task() {
 
     @JvmField protected var scheduler: Scheduler? = null
 
+
+
+    fun stop(){
+        val job = scheduler?.getJob(this)
+        scheduler?.cancel(job!!)
+    }
+
     abstract fun onStart()
 
 

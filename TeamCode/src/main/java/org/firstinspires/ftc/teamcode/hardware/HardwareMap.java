@@ -1,7 +1,10 @@
 package org.firstinspires.ftc.teamcode.hardware;
 
+import android.util.Pair;
+
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -38,7 +41,7 @@ public class HardwareMap extends HardwareMapper{
 
     public static final double FLIPPER_DOWN = 0.30;
     public static final double FLIPPER_MID = 0.50;
-    public static final double FLIPPER_UP = 0.70;
+    public static final double FLIPPER_UP = 0.80;
 
     public static final double HOOD_UP = 0.5578;
     public static final double HOOD_50 = 0.3700;
@@ -146,6 +149,12 @@ public class HardwareMap extends HardwareMapper{
     @HardwareName("turret2")
     public CRServo servoTurret2;
 
+    @HardwareName("hood")
+    public ServoImplEx hood;
+
+    @HardwareName("hoodEncoder")
+    public AnalogInput hoodEncoder;
+
     @HardwareName("limelight")
     public Limelight3A limelight;
 
@@ -208,6 +217,18 @@ public class HardwareMap extends HardwareMapper{
 //        Log.i("Hardware", String.format("set the power to %.2f", -power));
         servoTurret1.setPower(-power);
         servoTurret2.setPower(-power);
+    }
+
+    public static Pair<Double, Double> hoodAndSpeed(double distance) {
+        if (distance > SHOOT_MAX_DIST) {
+            return new Pair<>(HOOD_UP, SHOOT_FAR_RANGE_AUTO);
+        }
+        distance += 10.0;
+        double speed = 6.81246 * distance + 1075.16505;
+        double hood = 0.00492724 * distance + 0.0769453;
+        if (hood > 0.5578) hood = 0.5578;
+        else if (hood < 0.1817) hood = 0.1817;
+        return new Pair<>(hood, speed);
     }
 
     public static class Locks{

@@ -17,13 +17,18 @@ import org.firstinspires.ftc.teamcode.hardware.HardwareMap.ACTIVE_TRACK_P
 import org.firstinspires.ftc.teamcode.hardware.HardwareMap.BOTTOM_STOP_STOWED
 import org.firstinspires.ftc.teamcode.hardware.HardwareMap.FLIPPER_DOWN
 import org.firstinspires.ftc.teamcode.hardware.HardwareMap.FLIPPER_UP
+import org.firstinspires.ftc.teamcode.hardware.HardwareMap.HOOD_50
+import org.firstinspires.ftc.teamcode.hardware.HardwareMap.Locks
 import org.firstinspires.ftc.teamcode.hardware.HardwareMap.OUTTAKE_POWER
 import org.firstinspires.ftc.teamcode.hardware.HardwareMap.SHOOTER_STOP_DOWN
 import org.firstinspires.ftc.teamcode.hardware.HardwareMap.SHOOTER_STOP_UP
 import org.firstinspires.ftc.teamcode.hardware.HardwareMap.SHOOT_MID_RANGE
+import org.firstinspires.ftc.teamcode.hardware.HardwareMap.hoodAndSpeed
 import org.firstinspires.ftc.teamcode.systems.TurretImpl
 import org.firstinspires.ftc.teamcode.taskshark.Scheduler
 import org.firstinspires.ftc.teamcode.taskshark.Task
+import org.firstinspires.ftc.teamcode.taskshark.prefabs.Compose
+import org.firstinspires.ftc.teamcode.taskshark.prefabs.Group
 import org.firstinspires.ftc.teamcode.taskshark.prefabs.OneShot
 import org.firstinspires.ftc.teamcode.taskshark.prefabs.SentinelTask
 import org.firstinspires.ftc.teamcode.taskshark.prefabs.Wait
@@ -49,14 +54,50 @@ class TeleOpTest: LinearOpMode() {
 
     private lateinit var shooter: ShooterImpl
 
-    private var activeTrack: Task? = null
+    private var activeTrack: TurretTrack.TrackTask? = null
 
 
     private fun startTrackingFull() {
-        activeTrack = scheduler.add(turretTrack.track())
+        activeTrack = turretTrack.TrackTask()
+        scheduler.add(activeTrack!!)
         TurretImpl.P = ACTIVE_TRACK_P
         TurretImpl.I = ACTIVE_TRACK_I
         TurretImpl.D = ACTIVE_TRACK_D
+
+        val shooterTask = Compose{val hoodSpeed =
+            activeTrack!!.distance?.let{ hoodAndSpeed(it) }
+            shooter.setTarget(hoodSpeed?.second ?: SHOOT_MID_RANGE)
+            hw.hood.position = (hoodSpeed?.first ?: HOOD_50)
+        }
+        scheduler.add(shooterTask)
+
+
+        Log.i("shooterSpeed", hw.shoot1Vel.toString())
+    }
+    var needToStopIntake = false
+
+
+    private fun shoot(): Group{
+        val shoot = Group(
+            OneShot{shooter.pushThreshold = 0},
+            shooter.awaitTarget(
+                minimumDuration = 0.0,
+                maximumDuration = 0.75
+            ),
+            Combo.shoot(hw),
+            OneShot{shooter.pushThreshold = shooter.defaultPushThreshold},
+            Combo.shootAfter(hw)
+        )
+        if(needToStopIntake){
+            return Group(
+                Combo.intakeAfter(hw),
+                shoot
+            )
+        }
+        else{
+            return shoot
+        }
+
     }
 
     override fun runOpMode() {
@@ -79,8 +120,12 @@ class TeleOpTest: LinearOpMode() {
         scheduler.add(PinpointTask(hw.pinpoint))
         scheduler.add(DriveTask())
 
+        hw.turretEncoder.reset()
+
         var was1X = false
         var was1RB = false
+        var was1LB = false
+
         waitForStart()
 
         startTrackingFull()
@@ -89,58 +134,22 @@ class TeleOpTest: LinearOpMode() {
 
             val gp1X = gamepad1.x
             val gp1Rb = gamepad1.right_bumper
+            val gp1Lb = gamepad1.left_bumper
 
-            if(gp1Rb && !was1RB){
+            if(gp1Rb && !was1RB) {
+                needToStopIntake = true
                 was1RB = true
-
-                scheduler.add(
-                    OneShot({
-                        hw.setIntakePower(0.0)
-                        hw.bottomBallStop.position = BOTTOM_STOP_STOWED
-//                        if (hw.colorTopLeft.getDistance(DistanceUnit.MM) < 100.0) BOTTOM_BALL_STOP
-//                        else BOTTOM_STOP_STOWED
-                        hw.flipper.position = FLIPPER_DOWN
-                        hw.shooterBallStop.position = SHOOTER_STOP_DOWN
-                    })).require(HardwareMap.Locks.INTAKE)
-                        .then(Wait.ms(250)).require(HardwareMap.Locks.INTAKE)
-                        .then(OneShot {
-                            hw.setIntakePower(1.0)
-                        }).require(HardwareMap.Locks.INTAKE)
-                        .then(WaitUntil {
-                            hw.colorTopLeft.getDistance(DistanceUnit.MM) < 95.0
-                                    || hw.colorTopRight.getDistance(DistanceUnit.MM) < 95.0
-                        }).require(HardwareMap.Locks.INTAKE)
-                        .then(WaitUntilContinuous(0.5) {
-                            hw.frontRamp.state && hw.middleRamp.state
-                        }).require(HardwareMap.Locks.INTAKE)
-                        .then(OneShot{hw.setIntakePower(0.0)}).require(HardwareMap.Locks.INTAKE)
-                    .then(OneShot{was1RB = false})
+                scheduler.add(Combo.intake(hw)).require(Locks.INTAKE)
+                    .then(Combo.intakeAfter(hw))
+                    .then(OneShot{was1RB = false
+                    needToStopIntake = false})
             }
+
 
             if(gp1X && !was1X){
                 was1X = true
-                scheduler.add(OneShot {
-                            hw.setIntakePower(1.0)
-                            hw.bottomBallStop.position = BOTTOM_STOP_STOWED
-                            hw.shooterBallStop.position = SHOOTER_STOP_UP
-//                        hw.prism.loadAnimationsFromArtboard(Artboard.ARTBOARD_4)
-                            }).require(HardwareMap.Locks.INTAKE)
-                            .then(WaitUntilContinuous(0.15, max = 1.0) {
-                                !hw.frontRamp.state && (hw.colorBottomLeft.getDistance(DistanceUnit.MM) < 110.0
-                                        || hw.colorBottomRight.getDistance(DistanceUnit.MM) < 110.0)
-                            }).require(HardwareMap.Locks.INTAKE)
-                                    .then(OneShot {
-                                        hw.flipper.position = FLIPPER_UP
-                                    }).require(HardwareMap.Locks.INTAKE)
-                                    .then(Wait.ms(400))
-                    .then(OneShot {
-                    hw.flipper.position = FLIPPER_DOWN
-                    hw.setIntakePower(OUTTAKE_POWER)
-                }).require(HardwareMap.Locks.INTAKE)
-                    .then(Wait.ms(500))
-                    .then(OneShot {
-                        hw.setIntakePower(0.0)
-                    }).then(OneShot{was1X = false})
+                scheduler.add(shoot()).require(Locks.INTAKE)
+                    .then(OneShot{was1X = false})
             }
 
 

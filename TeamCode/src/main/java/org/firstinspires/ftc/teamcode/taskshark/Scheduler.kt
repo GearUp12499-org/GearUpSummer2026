@@ -160,4 +160,6 @@ open class Scheduler {
         processWaiting()
         dispatcher.runTasks()
     }
+
+    fun getJob(task:Task):Job? = activeTasks[task]
 }
