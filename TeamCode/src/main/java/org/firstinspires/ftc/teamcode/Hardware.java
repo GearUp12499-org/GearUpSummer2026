@@ -20,6 +20,7 @@ public class Hardware extends HardwareMapper {
 
     @HardwareName("frontLeft")
     @ZeroPower(DcMotor.ZeroPowerBehavior.BRAKE)
+    @Reversed
     public DcMotorEx frontLeft;
 
     @HardwareName("backRight")
