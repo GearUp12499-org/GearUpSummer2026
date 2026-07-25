@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -14,7 +16,7 @@ import org.firstinspires.ftc.teamcode.hardware.HardwareMapper;
 public class PinPointOpMode extends LinearOpMode {
     Hardware hardware;
     private void driveToPos(double targetX, double targetY){
-        double KP = 3;
+        double KP = 0.02;
 
         while (true){
             hardware.pinpoint.update();
@@ -28,25 +30,29 @@ public class PinPointOpMode extends LinearOpMode {
             }
             double motorPower = KP*ErrorX;
             double motorPower2 = KP*ErrorY;
+            double denominator = Math.abs(motorPower2+motorPower);
             if (motorPower + motorPower2 > 1){
-                motorPower = motorPower/(motorPower2 + motorPower);
-                motorPower2 = motorPower2/(motorPower2 + motorPower);
+                motorPower = motorPower/denominator;
+                motorPower2 = motorPower2/denominator;
 
         }
             else if (motorPower + motorPower2 < -1) {
-                motorPower = -1*(motorPower/(motorPower2 + motorPower));
-                motorPower2 = -1*(motorPower2/(motorPower2 + motorPower));
+                motorPower = motorPower/denominator;
+                motorPower2 = motorPower2/denominator;
             }
 
             hardware.frontLeft.setPower((motorPower + motorPower2));
             hardware.backLeft.setPower((motorPower - motorPower2));
             hardware.frontRight.setPower((motorPower - motorPower2));
             hardware.backRight.setPower((motorPower + motorPower2));
-            telemetry.addData("VelX",hardware.pinpoint.getVelX(DistanceUnit.INCH));
-            telemetry.addData("VelY",hardware.pinpoint.getVelY(DistanceUnit.INCH));
-            telemetry.addData("ErrorX",ErrorX);
-            telemetry.addData("ErrorY",ErrorY);
-            telemetry.update();
+            Log.i("VelX",String.valueOf(hardware.pinpoint.getVelX(DistanceUnit.INCH)));
+            Log.i("VelY",String.valueOf(hardware.pinpoint.getVelY(DistanceUnit.INCH)));
+            Log.i("ErrorX",String.valueOf(ErrorX));
+            Log.i("ErrorY",String.valueOf(ErrorY));
+            Log.i("motorPower",String.valueOf(motorPower));
+            Log.i("motorPower2",String.valueOf(motorPower2));
+            Log.i("PinpointX",String.valueOf(X));
+            Log.i("PinpointY",String.valueOf(Y));
 
 
 
@@ -73,7 +79,7 @@ public class PinPointOpMode extends LinearOpMode {
             telemetry.update();
 
             if (gamepad1.dpad_down){
-                driveToPos(24,24);
+                driveToPos(0,24);
             }
 
         }
