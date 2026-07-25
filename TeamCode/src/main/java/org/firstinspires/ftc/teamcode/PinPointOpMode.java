@@ -23,30 +23,25 @@ public class PinPointOpMode extends LinearOpMode {
             double ErrorX = targetX-X;
             double Y = currentPos.getY(DistanceUnit.INCH);
             double ErrorY = Y-targetY;
-            if (Math.sqrt((Math.abs(ErrorX) * Math.abs(ErrorX)) + (Math.abs(ErrorY) * Math.abs(ErrorY))) < 4 && hardware.pinpoint.getVelX(DistanceUnit.INCH) < 4 && hardware.pinpoint.getVelY(DistanceUnit.INCH) < 4 ){
+            if (Math.sqrt((Math.abs(ErrorX) * Math.abs(ErrorX)) + (Math.abs(ErrorY) * Math.abs(ErrorY))) < 4 && Math.abs(hardware.pinpoint.getVelX(DistanceUnit.INCH)) < 4 && Math.abs(hardware.pinpoint.getVelY(DistanceUnit.INCH)) < 4 ){
                 break;
             }
             double motorPower = KP*ErrorX;
             double motorPower2 = KP*ErrorY;
-            if (motorPower > 1){
-                motorPower = 1;
+            if (motorPower + motorPower2 > 1){
+                motorPower = motorPower/(motorPower2 + motorPower);
+                motorPower2 = motorPower2/(motorPower2 + motorPower);
 
         }
-            else if (motorPower < -1){
-                motorPower = -1;
-            }
-            if (motorPower2 > 1){
-                motorPower2 = 1;
-
-            }
-            else if (motorPower2 < -1){
-                motorPower2 = -1;
+            else if (motorPower + motorPower2 < -1) {
+                motorPower = -1*(motorPower/(motorPower2 + motorPower));
+                motorPower2 = -1*(motorPower2/(motorPower2 + motorPower));
             }
 
-            hardware.frontLeft.setPower((motorPower + motorPower2)*0.4);
-            hardware.backLeft.setPower((motorPower - motorPower2)*0.4);
-            hardware.frontRight.setPower((motorPower - motorPower2)*0.4);
-            hardware.backRight.setPower((motorPower + motorPower2)*0.4);
+            hardware.frontLeft.setPower((motorPower + motorPower2));
+            hardware.backLeft.setPower((motorPower - motorPower2));
+            hardware.frontRight.setPower((motorPower - motorPower2));
+            hardware.backRight.setPower((motorPower + motorPower2));
             telemetry.addData("VelX",hardware.pinpoint.getVelX(DistanceUnit.INCH));
             telemetry.addData("VelY",hardware.pinpoint.getVelY(DistanceUnit.INCH));
             telemetry.addData("ErrorX",ErrorX);
