@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -8,6 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.drivers.GoBildaPinpoint2Driver;
 import org.firstinspires.ftc.teamcode.hardware.HardwareMapper;
 import org.firstinspires.ftc.teamcode.hardware.HardwareName;
+import org.firstinspires.ftc.teamcode.hardware.Limelight;
 import org.firstinspires.ftc.teamcode.hardware.Reversed;
 import org.firstinspires.ftc.teamcode.hardware.ZeroPower;
 
@@ -35,6 +37,9 @@ public class Hardware extends HardwareMapper {
 
     @HardwareName("pinpoint")
     public GoBildaPinpoint2Driver pinpoint;
+
+    @HardwareName("limelight")
+    public Limelight3A limelight;
 
     public Hardware(HardwareMap map) {
         super(map);
