@@ -17,8 +17,15 @@ import org.firstinspires.ftc.teamcode.hardware.HardwareMapper;
 public class PinPointOpMode extends LinearOpMode {
     Hardware hardware;
     private void driveToPos(double targetX, double targetY, double targetAngle){
-        double KP = 0.1;
+        double KP = 0.5;
         double RP = 0.5;
+        double KD = 0.07;
+        double RD = 0.01;
+        double PrevFError = 0;
+        double PrevSError = 0;
+        double PrevAngError = 0;
+        double PrevTime = System.nanoTime()/1e9;
+
 
         while (true){
             hardware.pinpoint.update();
@@ -39,13 +46,14 @@ public class PinPointOpMode extends LinearOpMode {
             double f = ErrorX * Math.cos(currentPos.getHeading(AngleUnit.RADIANS)) + ErrorY * Math.sin(currentPos.getHeading(AngleUnit.RADIANS));
             double s = -ErrorY * Math.cos(currentPos.getHeading(AngleUnit.RADIANS)) + ErrorX * Math.sin(currentPos.getHeading(AngleUnit.RADIANS));
             //if (Math.sqrt((Math.abs(ErrorX) * Math.abs(ErrorX)) + (Math.abs(ErrorY) * Math.abs(ErrorY))) < 4 && Math.abs(ErrorAngle) < 4 && Math.abs(hardware.pinpoint.getVelX(DistanceUnit.INCH)) < 4 && Math.abs(hardware.pinpoint.getVelY(DistanceUnit.INCH)) < 4 ){
-            if (Math.abs(ErrorX) < 4 && Math.abs(ErrorY) < 4 && Math.abs(ErrorAngle) < 0.08 && Math.abs(hardware.pinpoint.getVelX(DistanceUnit.INCH)) < 4 && Math.abs(hardware.pinpoint.getVelY(DistanceUnit.INCH)) < 4 && Math.abs(hardware.pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS)) < 0.1){
+            if (Math.abs(ErrorX) < 0.5 && Math.abs(ErrorY) < 0.5 && Math.abs(ErrorAngle) < 0.08 && Math.abs(hardware.pinpoint.getVelX(DistanceUnit.INCH)) < 4 && Math.abs(hardware.pinpoint.getVelY(DistanceUnit.INCH)) < 4 && Math.abs(hardware.pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS)) < 0.1){
                 Log.i("Break","");
                 break;
             }
-            double motorPower = KP * f;
-            double motorPower2 = KP * s;
-            double motorPower3 = RP * ErrorAngle;
+            double now = System.nanoTime()/1e9;
+            double motorPower = KP * f + KD * (f - PrevFError) / (now - PrevTime);
+            double motorPower2 = KP * s + KD * (s - PrevSError) / (now - PrevTime);
+            double motorPower3 = RP * ErrorAngle + RD * (ErrorAngle - PrevAngError) / (now - PrevTime);
             double denominator = Math.abs(motorPower2+motorPower+motorPower3);
             if (motorPower + motorPower2 + motorPower3 > 1){
                 motorPower = motorPower/denominator;
@@ -74,6 +82,10 @@ public class PinPointOpMode extends LinearOpMode {
             Log.i("PinpointX",String.valueOf(X));
             Log.i("PinpointY",String.valueOf(Y));
             Log.i("PinpointAngle",String.valueOf(Angle));
+            PrevTime = now;
+            PrevFError = f;
+            PrevSError = s;
+            PrevAngError = ErrorAngle;
 
 
 
@@ -100,7 +112,7 @@ public class PinPointOpMode extends LinearOpMode {
             telemetry.update();
 
             if (gamepad1.dpad_down){
-                driveToPos(-24,24,-Math.PI);
+                driveToPos(-24,24,0);
             }
 
         }
