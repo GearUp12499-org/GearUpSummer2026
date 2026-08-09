@@ -9,18 +9,22 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
-import org.firstinspires.ftc.teamcode.hardware.HardwareMapper;
-
 
 
 @TeleOp
 public class PinPointOpMode extends LinearOpMode {
     Hardware hardware;
     private void driveToPos(double targetX, double targetY, double targetAngle){
-        double KP = 0.5;
-        double RP = 0.5;
-        double KD = 0.07;
-        double RD = 0.01;
+        double KP = 0.45;
+        double RP = 0.8;
+        double KD = 0.05;
+        double RD = 0.003;
+        double FKI = 0; //0.065
+        double SKI = 0; //0.095
+        double RI = 0;//.65;
+        double FISUM = 0;
+        double SISUM = 0;
+        double RISUM = 0;
         double PrevFError = 0;
         double PrevSError = 0;
         double PrevAngError = 0;
@@ -51,9 +55,15 @@ public class PinPointOpMode extends LinearOpMode {
                 break;
             }
             double now = System.nanoTime()/1e9;
-            double motorPower = KP * f + KD * (f - PrevFError) / (now - PrevTime);
-            double motorPower2 = KP * s + KD * (s - PrevSError) / (now - PrevTime);
-            double motorPower3 = RP * ErrorAngle + RD * (ErrorAngle - PrevAngError) / (now - PrevTime);
+            double dt = now - PrevTime;
+            if(Math.abs(f)<5){
+                FISUM += f*dt;
+                SISUM += f*dt;
+                RISUM += f*dt;
+            }
+            double motorPower = KP * f + KD * (f - PrevFError) / dt + FKI * FISUM;
+            double motorPower2 = KP * s + KD * (s - PrevSError) / dt + SKI * SISUM;
+            double motorPower3 = RP * ErrorAngle + RD * (ErrorAngle - PrevAngError) / dt - RI * RISUM;
             double denominator = Math.abs(motorPower2+motorPower+motorPower3);
             if (motorPower + motorPower2 + motorPower3 > 1){
                 motorPower = motorPower/denominator;
